@@ -1,0 +1,5 @@
+# AI/vision dependencies — installed on recognition nodes, not needed for
+# web-only or CI-lint environments.
+opencv-python>=4.9
+onnxruntime>=1.17
+insightface>=0.7.3

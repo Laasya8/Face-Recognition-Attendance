@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Student Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1 fw-bold text-dark">Student Management</h1>
+    <p class="text-secondary mb-0 small">Manage enrolled students and their biometric profiles.</p>
+  </div>
+</div>
+
+<div id="persons-alerts"></div>
+
+<!-- Search & Filters Card -->
+<div class="card shadow-sm mb-4 border-0">
+  <div class="card-body bg-white rounded">
+    <form method="get" class="row g-3 align-items-center">
+      <div class="col-12 col-md-4">
+        <div class="input-group">
+          <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Search name or roll number...">
+          {% if q or selected_department or selected_year %}
+            <a href="{{ url_for('dashboard.persons') }}" class="btn btn-outline-secondary">Clear</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <select class="form-select" name="department">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept }}" {% if selected_department == dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select class="form-select" name="year">
+          <option value="">All Years</option>
+          <option value="1" {% if selected_year == '1' %}selected{% endif %}>1st Year</option>
+          <option value="2" {% if selected_year == '2' %}selected{% endif %}>2nd Year</option>
+          <option value="3" {% if selected_year == '3' %}selected{% endif %}>3rd Year</option>
+          <option value="4" {% if selected_year == '4' %}selected{% endif %}>4th Year</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-dark w-100">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if current_user.has_role("operator") %}
+<div class="card shadow-sm mb-4 border-0">
+  <div class="card-header bg-white py-3 fw-semibold">Add Student</div>
+  <div class="card-body">
+    <form id="create-person-form" class="row g-3">
+      <div class="col-md-2">
+        <label class="form-label fw-semibold" for="person-code">Roll Number</label>
+        <input class="form-control" id="person-code" name="code"
+               maxlength="32" required placeholder="e.g. 23071A0501">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold" for="person-name">Full name</label>
+        <input class="form-control" id="person-name" name="full_name"
+               maxlength="120" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold" for="person-department">Department</label>
+        <input class="form-control" id="person-department" name="department"
+               maxlength="80" placeholder="e.g. CSE">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold" for="person-year">Year</label>
+        <select class="form-select" id="person-year" name="year">
+          <option value="">Select...</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold" for="person-email">Email</label>
+        <input class="form-control" id="person-email" name="email"
+               type="email" maxlength="120" placeholder="optional">
+      </div>
+      <div class="col-md-1 d-flex align-items-end">
+        <button class="btn btn-primary w-100" type="submit">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white py-3">
+    {{ pagination.total }} student(s) found
+  </div>
+  {% if pagination.items %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">Roll Number</th>
+          <th scope="col">Name</th>
+          <th scope="col">Department</th>
+          <th scope="col">Year</th>
+          <th scope="col">Status</th>
+          {% if current_user.has_role("operator") %}<th scope="col" class="text-end">Actions</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for person in pagination.items %}
+        <tr class="{% if not person.is_active %}table-secondary text-muted{% endif %}">
+          <td style="width: 56px">
+            {% if person.thumbnail %}
+            <img src="{{ url_for('dashboard.person_thumbnail', person_id=person.id) }}"
+                 alt="" class="rounded" width="40" height="40"
+                 style="object-fit: cover">
+            {% else %}
+            <div class="d-inline-flex align-items-center justify-content-center rounded fw-bold text-white"
+                 style="width:40px;height:40px;background:var(--stat-icon-students);font-size:0.85rem;flex-shrink:0;">
+              {{ person.full_name[:1].upper() }}
+            </div>
+            {% endif %}
+          </td>
+          <td><code>{{ person.code }}</code></td>
+          <td class="fw-bold">{{ person.full_name }}</td>
+          <td>{{ person.department or "—" }}</td>
+          <td>
+            {% if person.year %}
+              {{ person.year }} Year
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if person.is_enrolled %}
+            <span class="badge text-bg-success">enrolled</span>
+            {% else %}
+            <span class="badge text-bg-secondary">not enrolled</span>
+            {% endif %}
+            {% if not person.is_active %}
+            <span class="badge text-bg-danger">disabled</span>
+            {% endif %}
+          </td>
+          {% if current_user.has_role("operator") %}
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a class="btn btn-outline-primary"
+                 href="{{ url_for('dashboard.enroll', person_id=person.id) }}">
+                {{ "Re-enroll" if person.is_enrolled else "Enroll" }}
+              </a>
+              <a class="btn btn-outline-dark"
+                 href="{{ url_for('dashboard.edit_person', person_id=person.id) }}">
+                Edit
+              </a>
+              <button class="btn btn-outline-danger delete-person-btn"
+                      data-person-id="{{ person.id }}"
+                      data-person-name="{{ person.full_name }}">
+                Delete
+              </button>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Footer -->
+  {% if pagination.pages > 1 %}
+  <div class="card-footer bg-white py-3 border-top-0">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('dashboard.persons', page=pagination.prev_num or 1, q=q, department=selected_department, year=selected_year) }}" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('dashboard.persons', page=page_num, q=q, department=selected_department, year=selected_year) }}">
+                {{ page_num }}
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+          {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('dashboard.persons', page=pagination.next_num or pagination.pages, q=q, department=selected_department, year=selected_year) }}" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card-body text-center py-5">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="var(--text-muted)" class="mb-3 d-block mx-auto" viewBox="0 0 16 16">
+      <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-.25.023-.66.132-1.133A6.2 6.2 0 0 1 6.936 9.28M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+    </svg>
+    <p class="text-muted fw-semibold mb-1">No students found</p>
+    {% if current_user.has_role("operator") %}<p class="text-muted small mb-0">Add a student using the form above to get started.</p>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/persons.js') }}"></script>
+{% endblock %}

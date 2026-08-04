@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ "Re-enroll" if person.is_enrolled else "Enroll" }} — {{ person.full_name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.persons') }}">Students</a></li>
+    <li class="breadcrumb-item active" aria-current="page">
+      {{ "Re-enroll" if person.is_enrolled else "Enroll" }}
+    </li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1 fw-bold text-dark">
+      {{ "Re-enroll" if person.is_enrolled else "Enroll" }} Student
+    </h1>
+    <p class="text-secondary mb-0">
+      <strong>{{ person.full_name }}</strong> &middot; <code>{{ person.code }}</code>
+      {% if person.department %} &middot; {{ person.department }}{% endif %}
+    </p>
+  </div>
+  {% if person.is_enrolled %}
+  <div class="alert alert-warning border-0 shadow-sm py-2 px-3 mb-0 d-flex align-items-center gap-2" style="border-radius: var(--radius-sm);">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+    </svg>
+    <span class="small fw-semibold">This will replace the existing face template.</span>
+  </div>
+  {% endif %}
+</div>
+
+<div id="enroll-alerts" class="mb-3"></div>
+
+<div id="enroll-root" class="row g-4"
+     data-person-id="{{ person.id }}"
+     data-min-images="{{ min_images }}"
+     data-max-images="{{ max_images }}">
+
+  {# ── Camera Feed ── #}
+  <div class="col-lg-7">
+    <div class="card shadow-sm border-0" style="border-radius: var(--radius-lg);">
+      <div class="card-header py-3 px-4 fw-bold text-dark d-flex align-items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--accent-color)" viewBox="0 0 16 16">
+          <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 1 1 3.172 4z"/>
+          <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+        </svg>
+        Camera Feed
+      </div>
+      <div class="card-body p-0">
+        <video id="enroll-video" class="w-100 d-block" playsinline muted
+               style="aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0; background: #0f172a;"></video>
+      </div>
+      <div class="card-footer px-4 py-3 d-flex gap-2">
+        <button id="start-camera" class="btn btn-outline-secondary d-flex align-items-center gap-1 fw-semibold" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2z"/>
+          </svg>
+          Start Camera
+        </button>
+        <button id="capture-frame" class="btn btn-primary d-flex align-items-center gap-1 fw-semibold" type="button" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1zM8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5"/>
+          </svg>
+          Capture
+        </button>
+        <button id="submit-enrollment" class="btn btn-success ms-auto d-flex align-items-center gap-1 fw-semibold"
+                type="button" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+          </svg>
+          Submit Enrollment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Snapshots ── #}
+  <div class="col-lg-5">
+    <div class="card shadow-sm border-0 h-100" style="border-radius: var(--radius-lg);">
+      <div class="card-header py-3 px-4 d-flex align-items-center justify-content-between">
+        <span class="fw-bold text-dark">Snapshots</span>
+        <span id="shot-counter" class="badge rounded-pill" style="background:var(--accent-glow);color:var(--accent-color);font-weight:600;">0 / {{ max_images }}</span>
+      </div>
+      <div class="card-body p-3">
+        <p class="text-secondary small mb-3">
+          Capture <strong>{{ min_images }}–{{ max_images }}</strong> photos. Face the camera and slightly vary your angle between shots. Only one person should be visible.
+        </p>
+        <div id="shots" class="d-flex flex-wrap gap-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+<script src="{{ url_for('static', filename='js/enroll.js') }}"></script>
+{% endblock %}

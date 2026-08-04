@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# App data — SQLite DB holds biometric templates; never commit it
+instance/
+
+# Secrets
+.env
+
+# InsightFace ONNX model cache (Phase 1+)
+models_store/
+
+# Tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db

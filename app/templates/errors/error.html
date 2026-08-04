@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Error {{ status_code }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-12 col-md-6 text-center">
+    <div class="display-1 fw-bold text-secondary">{{ status_code }}</div>
+    <p class="lead">{{ message }}</p>
+    <a class="btn btn-primary" href="{{ url_for('dashboard.index') }}">
+      Back to dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

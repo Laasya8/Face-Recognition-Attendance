@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1 fw-bold text-dark">System Settings</h1>
+    <p class="text-secondary mb-0 small">Configure recognition thresholds and system behaviour.</p>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+  <div class="col-12 col-lg-10 col-xl-8">
+    <form method="post" class="needs-validation" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {# ── Recognition Thresholds ── #}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="stat-icon icon-sessions" style="width:36px;height:36px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5h-2v12h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Recognition Thresholds</div>
+              <div class="small text-secondary">Cosine similarity cutoff values (0.0 – 1.0)</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="threshold-accept">
+                Accept Threshold
+                <span id="accept-val" class="badge ms-1 fw-bold" style="background:rgba(16,185,129,.12);color:#059669;font-size:0.85em;">{{ similarity_threshold_accept }}</span>
+              </label>
+              <input type="range" class="form-range accent-range" id="threshold-accept-range"
+                     min="0.00" max="1.00" step="0.01"
+                     value="{{ similarity_threshold_accept }}"
+                     oninput="syncRange('threshold-accept', this.value)">
+              <input type="number" step="0.01" min="0.0" max="1.0" class="form-control form-control-sm mt-2"
+                     id="threshold-accept" name="similarity_threshold_accept"
+                     value="{{ similarity_threshold_accept }}" required
+                     oninput="syncInput('threshold-accept-range', this.value, 'accept-val', this.value)">
+              <div class="form-text">Similarity ≥ this value → automatically mark attendance. (e.g. 0.45)</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="threshold-review">
+                Review Threshold
+                <span id="review-val" class="badge ms-1 fw-bold" style="background:rgba(245,158,11,.12);color:#d97706;font-size:0.85em;">{{ similarity_threshold_review }}</span>
+              </label>
+              <input type="range" class="form-range accent-range" id="threshold-review-range"
+                     min="0.00" max="1.00" step="0.01"
+                     value="{{ similarity_threshold_review }}"
+                     oninput="syncRange('threshold-review', this.value)">
+              <input type="number" step="0.01" min="0.0" max="1.0" class="form-control form-control-sm mt-2"
+                     id="threshold-review" name="similarity_threshold_review"
+                     value="{{ similarity_threshold_review }}" required
+                     oninput="syncInput('threshold-review-range', this.value, 'review-val', this.value)">
+              <div class="form-text">Similarity ≥ this value but below Accept → flag for review. (e.g. 0.35)</div>
+            </div>
+          </div>
+
+          {# Visual threshold diagram #}
+          <div class="mt-4 p-3 rounded" style="background: var(--bg-primary);">
+            <div class="small fw-semibold text-secondary mb-2 text-uppercase" style="letter-spacing:.04em;">Threshold Visualizer</div>
+            <div class="position-relative" style="height: 28px; border-radius: 99px; overflow: hidden; background: var(--border-color);">
+              <div id="viz-reject" style="position:absolute; left:0; top:0; height:100%; background: rgba(239,68,68,0.25); transition: width .3s;"></div>
+              <div id="viz-review" style="position:absolute; top:0; height:100%; background: rgba(245,158,11,0.35); transition: left .3s, width .3s;"></div>
+              <div id="viz-accept" style="position:absolute; top:0; right:0; height:100%; background: rgba(16,185,129,0.3); transition: width .3s;"></div>
+              <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-around px-3" style="top:0; font-size:0.7rem; font-weight:700; color: var(--text-secondary); pointer-events:none;">
+                <span>Rejected</span>
+                <span>Review</span>
+                <span>Accepted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Enrollment Parameters ── #}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="stat-icon icon-students" style="width:36px;height:36px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0M6 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Enrollment Parameters</div>
+              <div class="small text-secondary">Snapshot requirements per student face profile</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="enroll-min">
+                Minimum Images
+                <span class="badge ms-1" style="background:var(--accent-glow);color:var(--accent-color);">{{ enroll_min_images }}</span>
+              </label>
+              <input type="number" min="1" max="50" class="form-control"
+                     id="enroll-min" name="enroll_min_images"
+                     value="{{ enroll_min_images }}" required>
+              <div class="form-text">Minimum snapshots needed to build a centroid profile. (e.g. 5)</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="enroll-max">
+                Maximum Images
+                <span class="badge ms-1" style="background:var(--accent-glow);color:var(--accent-color);">{{ enroll_max_images }}</span>
+              </label>
+              <input type="number" min="1" max="100" class="form-control"
+                     id="enroll-max" name="enroll_max_images"
+                     value="{{ enroll_max_images }}" required>
+              <div class="form-text">Maximum snapshots accepted per student. (e.g. 10)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Attendance & Security ── #}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="stat-icon icon-marked" style="width:36px;height:36px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8"/>
+                <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l2.248 1.498a.5.5 0 0 1-.496.868l-2.5-1.667A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+              </svg>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Attendance &amp; Security</div>
+              <div class="small text-secondary">Cooldown period and data retention options</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="attendance-cooldown">Attendance Cooldown (Minutes)</label>
+              <input type="number" min="0" class="form-control"
+                     id="attendance-cooldown" name="attendance_cooldown_minutes"
+                     value="{{ attendance_cooldown_minutes }}" required>
+              <div class="form-text">Prevent marking multiple times within this window. Set to <strong>0</strong> to disable.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold d-block mb-3">Source Image Storage</label>
+              <div class="form-check form-switch" style="transform: scale(1.1); transform-origin: left;">
+                <input class="form-check-input" type="checkbox" id="store-original" name="store_original_images"
+                       value="true" {% if store_original_images == 'true' %}checked{% endif %}>
+                <label class="form-check-label fw-semibold ms-1" for="store-original">
+                  Store AES-Encrypted Photos
+                </label>
+              </div>
+              <div class="form-text mt-2">Saves the raw JPEG snapshots encrypted at rest alongside embeddings.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Save Button ── #}
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+        <button class="btn btn-primary px-5 py-2 fw-semibold" type="submit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+          </svg>
+          Save Configurations
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live range slider sync
+function syncRange(inputId, value) {
+  const num = parseFloat(value);
+  document.getElementById(inputId).value = num.toFixed(2);
+  const suffix = inputId.includes('accept') ? 'accept-val' : 'review-val';
+  document.getElementById(suffix).textContent = num.toFixed(2);
+  updateViz();
+}
+function syncInput(rangeId, value, badgeId, badgeVal) {
+  const num = parseFloat(value);
+  if (!isNaN(num)) {
+    document.getElementById(rangeId).value = num;
+    document.getElementById(badgeId).textContent = num.toFixed(2);
+    updateViz();
+  }
+}
+
+function updateViz() {
+  const accept = parseFloat(document.getElementById('threshold-accept').value) || 0;
+  const review = parseFloat(document.getElementById('threshold-review').value) || 0;
+  const lo = Math.min(review, accept);
+  const hi = Math.max(review, accept);
+
+  document.getElementById('viz-reject').style.width = (lo * 100) + '%';
+  document.getElementById('viz-review').style.left  = (lo * 100) + '%';
+  document.getElementById('viz-review').style.width = ((hi - lo) * 100) + '%';
+  document.getElementById('viz-accept').style.width = ((1 - hi) * 100) + '%';
+}
+
+document.addEventListener('DOMContentLoaded', updateViz);
+</script>
+{% endblock %}

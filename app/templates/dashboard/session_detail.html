@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}{{ session.name }} — Session Detail{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.sessions') }}">Sessions</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ session.name }}</li>
+  </ol>
+</nav>
+
+{# ── Header Row ── #}
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <h1 class="h3 mb-0 fw-bold text-dark">{{ session.name }}</h1>
+      {% if session.is_open %}
+        <span class="badge rounded-pill fw-semibold" style="background:rgba(16,185,129,.12);color:#059669;">&#9679; Live</span>
+      {% else %}
+        <span class="badge rounded-pill text-bg-secondary fw-semibold">Closed</span>
+      {% endif %}
+    </div>
+    <p class="text-secondary mb-0 small">
+      {{ session.session_date.strftime("%A, %B %d, %Y") }}
+      {% if session.department %} &middot; <span class="badge text-bg-secondary fw-normal">{{ session.department }}</span>{% endif %}
+      {% if session.year %} &middot; Year {{ session.year }}{% endif %}
+      {% if session.start_time %} &middot; Started {{ session.start_time.strftime("%H:%M") }}{% endif %}
+      {% if session.end_time %} &middot; Ended {{ session.end_time.strftime("%H:%M") }}{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('dashboard.session_export', session_id=session.id, format='csv') }}"
+       class="btn btn-outline-secondary d-flex align-items-center gap-1 btn-sm px-3">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.707-.708L8.5 10.293z"/>
+        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+      </svg> CSV
+    </a>
+    <a href="{{ url_for('dashboard.session_export', session_id=session.id, format='excel') }}"
+       class="btn btn-outline-success d-flex align-items-center gap-1 btn-sm px-3">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M5.884 6.68a.5.5 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+      </svg> Excel
+    </a>
+  </div>
+</div>
+
+{# ── Stats Row ── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm border-0 h-100 stat-card stat-students hover-elevate">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="stat-icon icon-students">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-.25.023-.66.132-1.133A6.2 6.2 0 0 1 6.936 9.28M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label mt-1">Total Roster</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm border-0 h-100 stat-card stat-biometric hover-elevate">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="stat-icon icon-biometric">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="stat-value">{{ stats.present + stats.late }}</div>
+        <div class="stat-label mt-1">Present &amp; Late</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm border-0 h-100 stat-card stat-marked hover-elevate">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+          </div>
+        </div>
+        <div class="stat-value">{{ stats.absent }}</div>
+        <div class="stat-label mt-1">Absent</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm border-0 h-100 stat-card stat-sessions hover-elevate">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="stat-icon icon-sessions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5h-2v12h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="stat-value">{{ stats.present_rate | round(1) }}%</div>
+        <div class="stat-label mt-1">Attendance Rate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Attendance rate progress bar #}
+{% if stats.total > 0 %}
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="small fw-semibold text-secondary text-uppercase" style="letter-spacing:.04em;">Overall Attendance Rate</span>
+      <span class="fw-bold {% if stats.present_rate >= 75 %}text-success{% else %}text-danger{% endif %}">
+        {{ stats.present_rate | round(1) }}%
+      </span>
+    </div>
+    <div class="progress" style="height: 10px; border-radius: 99px; background: var(--border-color);">
+      {% set rate = stats.present_rate | round(1) %}
+      <div class="progress-bar{% if rate >= 75 %} bg-success{% elif rate >= 50 %} bg-warning{% else %} bg-danger{% endif %}"
+           role="progressbar"
+           style="width: {{ rate }}%; border-radius: 99px; transition: width 0.8s ease;"
+           aria-valuenow="{{ rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="d-flex gap-3 mt-2 small text-secondary">
+      <span><span class="fw-semibold text-success">{{ stats.present }}</span> Present</span>
+      <span><span class="fw-semibold text-warning">{{ stats.late }}</span> Late</span>
+      <span><span class="fw-semibold text-danger">{{ stats.absent }}</span> Absent</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Filters ── #}
+<div class="card shadow-sm mb-4 border-0">
+  <div class="card-body p-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label small fw-semibold mb-1">Search</label>
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Name or roll number…">
+          {% if q or selected_status or selected_department or selected_year %}
+            <a href="{{ url_for('dashboard.session_detail', session_id=session.id) }}" class="btn btn-outline-secondary">Clear</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Status</label>
+        <select class="form-select form-select-sm" name="status">
+          <option value="">All</option>
+          <option value="present" {% if selected_status == 'present' %}selected{% endif %}>Present</option>
+          <option value="late"    {% if selected_status == 'late'    %}selected{% endif %}>Late</option>
+          <option value="absent"  {% if selected_status == 'absent'  %}selected{% endif %}>Absent</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Department</label>
+        <select class="form-select form-select-sm" name="department">
+          <option value="">All</option>
+          {% for dept in departments %}
+            <option value="{{ dept }}" {% if selected_department == dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Year</label>
+        <select class="form-select form-select-sm" name="year">
+          <option value="">All</option>
+          {% for y in [1,2,3,4] %}
+            <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>Year {{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Attendance Roster ── #}
+<div class="card shadow-sm border-0">
+  <div class="card-header py-3 px-4 d-flex align-items-center justify-content-between">
+    <span class="fw-bold text-dark">Attendance Roster</span>
+    <span class="badge rounded-pill" style="background:var(--accent-glow);color:var(--accent-color);font-weight:600;">
+      {{ attendance_rows | length }} shown
+    </span>
+  </div>
+  {% if attendance_rows %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr>
+          <th scope="col">Roll No.</th>
+          <th scope="col">Name</th>
+          <th scope="col">Dept.</th>
+          <th scope="col">Year</th>
+          <th scope="col" class="text-center">Status</th>
+          <th scope="col">Marked At</th>
+          <th scope="col" class="text-end">Confidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in attendance_rows %}
+        {% set p = row.person %}
+        <tr class="{% if row.status == 'absent' %}table-light{% endif %}">
+          <td><code>{{ p.code }}</code></td>
+          <td class="fw-semibold text-dark">{{ p.full_name }}</td>
+          <td class="text-secondary small">{{ p.department or "—" }}</td>
+          <td class="text-secondary small">{% if p.year %}Yr {{ p.year }}{% else %}—{% endif %}</td>
+          <td class="text-center">
+            {% if row.status == 'present' %}
+              <span class="badge text-bg-success fw-semibold">Present</span>
+            {% elif row.status == 'late' %}
+              <span class="badge text-bg-warning fw-semibold">Late</span>
+            {% elif row.status == 'manual' %}
+              <span class="badge fw-semibold" style="background:rgba(99,102,241,.12);color:#6366f1;">Manual</span>
+            {% else %}
+              <span class="badge text-bg-danger fw-semibold">Absent</span>
+            {% endif %}
+          </td>
+          <td class="text-secondary small font-monospace">
+            {{ row.marked_at.strftime("%I:%M:%S %p") if row.marked_at else "—" }}
+          </td>
+          <td class="text-end font-monospace small">
+            {% if row.confidence is not none %}
+              {% set pct = (row.confidence * 100) | round(0) | int %}
+              <span class="{% if pct >= 70 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %} fw-semibold">
+                {{ "%.2f" | format(row.confidence) }}
+              </span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-center py-5">
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="var(--text-muted)" class="mb-3 d-block mx-auto" viewBox="0 0 16 16">
+      <path d="M11.5 15a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1.5a.5.5 0 0 1-1 0V10a.5.5 0 0 1 1 0m0 3a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0M15 2a1 1 0 0 1 1 1v7.5a4.5 4.5 0 0 0-1-.088V3H1v10a1 1 0 0 0 1 1h7.412A4.5 4.5 0 0 0 8.88 15H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>
+    </svg>
+    <p class="text-muted fw-semibold mb-1">No results</p>
+    <p class="text-muted small mb-0">No attendance records match the current filters.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
